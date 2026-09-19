@@ -1,0 +1,118 @@
+/**
+ * TagTune - Online MP3 Tag Editor
+ * Designed & Architected by Farghar
+ * Namespace: Farghar
+ */
+
+import React, { useCallback, useRef, useState } from 'react';
+import { Farghar } from '../types';
+import { FargharTagProcessor } from '../utils/tagProcessor';
+
+interface FargharFileUploaderProps {
+  onFilesSelected: (files: File[]) => void;
+  disabled?: boolean;
+}
+
+export const FargharFileUploader: React.FC<FargharFileUploaderProps> = ({ onFilesSelected, disabled }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled) setIsDragging(true);
+  }, [disabled]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (disabled) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    const validFiles = files.filter(f => FargharTagProcessor.isSupportedFormat(f.name));
+    if (validFiles.length > 0) {
+      onFilesSelected(validFiles);
+    }
+  }, [onFilesSelected, disabled]);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      onFilesSelected(files);
+      e.target.value = '';
+    }
+  }, [onFilesSelected]);
+
+  const handleClick = () => {
+    if (!disabled) fileInputRef.current?.click();
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`
+        relative cursor-pointer rounded-2xl border-2 border-dashed p-8 sm:p-12
+        transition-all duration-300 text-center
+        ${isDragging
+          ? 'border-purple-400 bg-purple-500/10 scale-[1.02]'
+          : 'border-white/20 hover:border-purple-400/50 hover:bg-white/5'
+        }
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+      `}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".mp3,.mp4,.m4a,.wav,.flac,.ogg,.mkv,.mov,.flv"
+        onChange={handleFileChange}
+        className="hidden"
+        disabled={disabled}
+      />
+
+      <div className="flex flex-col items-center gap-4">
+        <div className={`
+          w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center
+          transition-all duration-300
+          ${isDragging ? 'farghar-gradient scale-110' : 'bg-white/10'}
+        `}>
+          <span className="text-3xl sm:text-4xl">{isDragging ? '📥' : '🎶'}</span>
+        </div>
+
+        <div>
+          <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
+            {isDragging ? 'فایل‌ها را رها کنید!' : 'فایل‌های صوتی و ویدیویی را بکشید و رها کنید'}
+          </h3>
+          <p className="text-sm text-gray-400 mb-4">
+            یا کلیک کنید برای انتخاب فایل
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {Farghar.SUPPORTED_FORMATS.map(format => (
+              <span
+                key={format}
+                className="farghar-badge bg-white/5 text-gray-400 border border-white/10"
+              >
+                .{format}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Decorative elements */}
+      <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-purple-400/50 animate-pulse" />
+      <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-blue-400/50 animate-pulse" />
+      <div className="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-pink-400/50 animate-pulse" />
+    </div>
+  );
+};
