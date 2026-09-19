@@ -4,7 +4,7 @@
  * Namespace: Farghar
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Farghar } from '../types';
 import { FargharTagProcessor } from '../utils/tagProcessor';
 
@@ -20,6 +20,15 @@ export const FargharTagEditor: React.FC<FargharTagEditorProps> = ({ file, onUpda
   const [cover, setCover] = useState<Farghar.CoverArt | null>(file.cover);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync local state with file props when tags/cover are loaded or file changes
+  useEffect(() => {
+    setTags({ ...file.tags });
+  }, [file.tags, file.id]);
+
+  useEffect(() => {
+    setCover(file.cover);
+  }, [file.cover, file.id]);
 
   const coverUrl = FargharTagProcessor.coverToDataUrl(cover);
 
